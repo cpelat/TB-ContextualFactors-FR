@@ -1,0 +1,22 @@
+variable;name;short_name
+unemploy;% of unemployed people;Unemployed
+dens_2010;Population density level;Population density
+crowded_house;% of overcrowded households;Crowded housing
+house_income;Median household income;Income
+manual_workers;% of workers;Workers
+high_school_grad;% of high school graduates;% of high school graduates
+fdep;French Deprivation Index;Deprivation index
+Empty model;Empty model;Empty
+ID_area;ZIP code-level spatial random effect;ZIP code-level random effect
+reg_old;Regional effect;Region
+unemploy_log;% of unemployed people (log);Unemployed
+crowded_house_log;% of overcrowded households (log);Crowded housing
+house_income_log;Median household income (log);Income
+manual_workers_log;% of workers (log);Workers
+high_school_grad_log;% of high school graduates (log);% of high school graduates
+SEXE           ;Sex;
+age             ;Age;
+IMMI          ;Immigration status;
+collect       ;Lives in a communal housing;
+type_collect  ;Type of communal housing;
+sdf           ;Has no permanent housing;

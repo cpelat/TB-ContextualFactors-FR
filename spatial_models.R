@@ -46,11 +46,11 @@ corresp_dep_reg <- read_delim("depts2016.txt" %>% datapath) %>%
 
 #--------- Read shapefiles régions et départements------------
 # Import shapefile of PMSI21 codes for metropolitan France
-map_PMSI21 <- readRDS( datapath( "France_shapefiles/map_PMSI21_simplifiee_fusionBihorel.rds" ) ) 
+map_PMSI21 <- readRDS( datapath( "France_shapefiles/map_PMSI21_simplified.rds" ) ) 
 
-map_dep <- readRDS( datapath( "France_shapefiles/map_PMSI21_dep_fusion_Bihorel.rds" ) )  
+map_dep <- readRDS( datapath( "France_shapefiles/map_PMSI21_dep.rds" ) )  
 
-map_reg <- readRDS( datapath( "France_shapefiles/map_PMSI21_reg_fusion_Bihorel.rds" ) )
+map_reg <- readRDS( datapath( "France_shapefiles/map_PMSI21_reg.rds" ) )
 
 
 
