@@ -1,27 +1,24 @@
+################################################################################
 # Ecological analysis of the association between tuberculosis incidence and
 # ZIP code-level socioeconomic variables, 2008--2019
-# code last revised on 2025-07-18
+################################################################################
+
+# Pre-treatment of data: 
+# - merge observed TB case counts, expected counts and explanatory variables
+# - merge to the shapefile of PMSI21 codes (ZIP codes)
+# - Log-transform teh explanaotry ariables and cut them in 25 groups for INLA RW2 models
 
 library(tidyverse)
 library(magrittr)
 library(sf)
-library(Cairo)
-library(INLA)
-library(ggpubr)
-library(corrgram)
 library(corrplot)
-library(flextable)
-library(Hmisc)
-library(RColorBrewer)
 library(PerformanceAnalytics)
+library(ggpubr)
+library(INLA)
 
 
-setEPS() # Option to generate EPS file with the postscript function
-set_flextable_defaults(  font.size = 10 )
-
+#--------- Read the useful function bundle ------------
 source( "include/include_functions.R", encoding = "UTF-8" )
-
-
 
 #----------- Read TB cases dataset -------------
 d_PMSI21 <- arrow::read_parquet("TB_cases_PMSI21.parquet" %>% datapath) 
@@ -63,7 +60,6 @@ W <- spdep::nb2mat( neighbours = tb.adj, style = "B", zero.policy = TRUE )
 
 
 #------------------------- Prepare the analysis dataset ------------------------
-n_areas <- nrow(map_PMSI21)
 
 # Merge PMSI21 map shapefile with TB data counts + expected counts + explanatory variables
 map_PMSI21_2 <- 
@@ -83,7 +79,6 @@ map_PMSI21_2 %<>%
 # Adding region codes
 map_PMSI21_2 %<>% 
   left_join( corresp_dep_reg %>% rename(reg = "REGION", dep_pmsi="DEP") )
-
 
 
 
@@ -126,12 +121,16 @@ map_PMSI21_2 %<>%
 
 #------ For non-linear effects in INLA (rw2): need to cut the standardized continuous variables in 25 classes max -------
 n <- 25
-for( v in  str_glue( "{list_var_cont_all_and_log}_cr" ) ){
+for( v in  str_glue("{list_var_cont_all_and_log}_cr")){
   print(v)
   map_PMSI21_2[[ sprintf("%s_g", v %>% str_remove( "_cr" ) ) ]] <- inla.group( map_PMSI21_2[[v]], n = n, method = "cut" )
 }
 
 map_PMSI21_2 %>% names
+
+
+#----- Save the pre-treated dataset ----------------
+saveRDS(map_PMSI21_2, "pretreated_dataset_sf.rds" %>% datapath())
 
 
 
@@ -164,8 +163,8 @@ plotlist[[v]] <- ggplot( tmp, aes(x =!!sym(v) ) ) +
   labs( y="" )
   
 # Histogramme
-ncol = 2
-nrow = (length(plotlist) / ncol) %>% ceiling
+ncol <- 2
+nrow <- (length(plotlist) / ncol) %>% ceiling
 ggfinal <- ggarrange(  plotlist = plotlist[sort(names(plotlist))],
                        ncol = ncol,
                        nrow = nrow,
@@ -185,25 +184,20 @@ dev.off()
 map_tmp <- map_PMSI21_2[, str_glue("{c(listvar_log, 'fdep')}_cr") ] %>%
   st_drop_geometry()
 
-names( map_tmp ) <- corresp_variable_name[ colnames( map_tmp ) %>% 
+names(map_tmp) <- corresp_variable_name[ colnames( map_tmp ) %>% 
                                             str_remove( "_cr") %>% 
                                             str_remove( "_log"), ]$short_name
 
-
-
 # Correlation matrix with histograms
 png(file="corr_hist_chart_log.png" %>% respath(), width=1000, height=1000)
-chart.Correlation(map_tmp, histogram=TRUE, pch=19)
+  chart.Correlation(map_tmp, histogram=TRUE, pch=19)
 dev.off()
-
 
 # Correlation matrix with ellipses
 M <- cor(map_tmp)
-
 coul <- COL2('RdBu', 100) %>% rev
-
 CairoPNG( file="corrplot_log_rect.png" %>% respath(), width=600, height=600 )
-corrplot(M, method = 'ellipse',
+  corrplot(M, method = 'ellipse',
          addCoef.col ='black', 
          number.cex = 0.8, 
          order = 'hclust', 
@@ -214,10 +208,8 @@ corrplot(M, method = 'ellipse',
          addrect = 3, 
          rect.lwd = 3, 
          addgrid.col=NA
-)
+  )
 dev.off()
-
-
 
 
 #----- ANOVA association between the density level and the continuous (log-transformed) variables ------
