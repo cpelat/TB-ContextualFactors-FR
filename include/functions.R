@@ -5,6 +5,7 @@ library( sf )
 library( readr )
 library( data.table )
 library(yaml)
+library(ggside)
 
 conf <- read_yaml('conf/global_conf.yml')
 
@@ -500,7 +501,6 @@ plotmap_inset <- function(  var= "rapport",
 
 
 
-library(ggside)
 
 trace_ribbon <- function(tmp = mod$summary.random[[v]], v, nomvar, y_title, ylim, 
                          axis.title.size=12,
