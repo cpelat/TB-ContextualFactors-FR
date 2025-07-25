@@ -6,7 +6,7 @@
 # Pre-treatment of data: 
 # - merge observed TB case counts, expected counts and explanatory variables
 # - merge to the shapefile of PMSI21 codes (ZIP codes)
-# - Log-transform teh explanaotry ariables and cut them in 25 groups for INLA RW2 models
+# - Log-transform the explanatory variables and cut them in 25 groups for INLA RW2 models
 
 library(tidyverse)
 library(magrittr)
@@ -48,10 +48,10 @@ map_PMSI21 <- readRDS( datapath( "France_shapefiles/map_PMSI21_simplified.rds" )
 map_PMSI21_2 <- 
   map_PMSI21 %>% 
   cross_join(tibble(period=unique(d_PMSI21$period))) %>%
-  left_join(d_PMSI21) %>%
-  left_join(Ei_PMSI21) %>%
-  left_join(expl_var_PMSI21)  %>%
-  arrange(PMSI21_CODE, period)
+  left_join(d_PMSI21, by=c("PMSI21_CODE", "period")) %>%
+  left_join(Ei_PMSI21, by=c("PMSI21_CODE", "period")) %>%
+  left_join(expl_var_PMSI21, by=c("PMSI21_CODE", "period"))  %>%
+  arrange(period, PMSI21_CODE)
 
 # Replace missing TB counts with 0 
 map_PMSI21_2 %<>%  
@@ -102,7 +102,11 @@ map_PMSI21_2 %<>%
   mutate(across(.cols=all_of(c(list_var_cont_all, listvar_log)), .fns=cr, .names="{.col}_cr" )) %>%
   ungroup()  
 
+
 #------ For non-linear effects in INLA (rw2): need to cut the standardized continuous variables in 25 classes max -------
+# List of all continuous variables (log and not log)
+list_var_cont_all_and_log <- c(list_var_cont_all, listvar_log)
+
 n <- 25
 for( v in  str_glue("{list_var_cont_all_and_log}_cr")){
   print(v)
@@ -118,8 +122,7 @@ saveRDS(map_PMSI21_2, "pretreated_dataset_sf.rds" %>% respath())
 
 
 #---------------------- Plots of the distributions -----------------------------
-# List of all continuous variables (log and not log)
-list_var_cont_all_and_log <- c(list_var_cont_all, listvar_log)
+
 
 # Histograms of the variable distributions 
 tmp <- map_PMSI21_2[, c(str_glue("{list_var_cont_all_and_log}_cr"), list_var_cat0 ) ] %>%
