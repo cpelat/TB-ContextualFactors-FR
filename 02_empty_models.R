@@ -217,7 +217,7 @@ labels[ length(labels) ] <- paste0( ">", labels[ length(labels) ]  )
 colorvalues <- rev(RColorBrewer::brewer.pal( n = 9, name = "RdYlGn"))  
 
 p2_bym2 <- plotmap_inset( var= "Ui_empty_bym2", 
-                          mytitle="Spatial effect, BYM2 model",  
+                          mytitle="Spatial random effect, BYM2 model",  
                           mymap=map_PMSI21_3,
                           mymap_dep=map_dep, 
                           mymap_reg = map_reg,
@@ -248,14 +248,20 @@ p2_leroux <- plotmap_inset( var= "Ui_empty_leroux",
 
 
 
-#---- Plot the SNR and Ui map for the BYM2 model (central analysis) ------
+#---- Plot the SNR and Ui maps for the BYM2 model (central analysis) ------
 ptot <- ggarrange(p1_bym2, p2_bym2, nrow=1, ncol=2)  
-ptot
-ggsave( "SNR_Ui_empty_model_bym2.eps" %>% respath, plot=ptot, width=20, height=12, units = "cm")
 
 png( "SNR_Ui_empty_model_bym2.png" %>% respath, width=1000, height=600)
 ptot
 dev.off()
 
+#----- Plot the SNR and Ui maps for the BYM2 and Leroux model ----
+ptot_sens <- ggarrange(p1_bym2, p1_leroux, 
+                       p2_bym2, p2_leroux, common.legend = TRUE, nrow=2, ncol=2)  
+ptot_sens
+
+png( "SNR_Ui_empty_model_bym2_leroux.png" %>% respath, width=1000, height=1000)
+  ptot_sens
+dev.off()
 
 
