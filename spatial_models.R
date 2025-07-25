@@ -12,7 +12,6 @@ library(corrgram)
 library(corrplot)
 library(flextable)
 library(Hmisc)
-library(plotly)
 library(RColorBrewer)
 library(PerformanceAnalytics)
 
@@ -36,7 +35,7 @@ expl_var_PMSI21 <- arrow::read_parquet("explanatory_variables_PMSI21.parquet" %>
 
 #-------------------------- Read correspondence files --------------------------
 # Variable names
-corresp_variable_nom <- read_csv2("corresp_variable_name.csv" %>% datapath) %>%
+corresp_variable_name <- read_csv2("corresp_variable_name.csv" %>% datapath) %>%
   column_to_rownames("variable")
 
 # Correspondence French departments (districts) - regions
@@ -125,14 +124,26 @@ map_PMSI21_2 %<>%
   mutate(across(.cols=all_of(c(list_var_cont_all, listvar_log)), .fns=cr, .names="{.col}_cr" )) %>%
   ungroup()  
 
+#------ For non-linear effects in INLA (rw2): need to cut the standardized continuous variables in 25 classes max -------
+n <- 25
+for( v in  str_glue( "{list_var_cont_all_and_log}_cr" ) ){
+  print(v)
+  map_PMSI21_2[[ sprintf("%s_g", v %>% str_remove( "_cr" ) ) ]] <- inla.group( map_PMSI21_2[[v]], n = n, method = "cut" )
+}
+
+map_PMSI21_2 %>% names
 
 
-#------------------ Histograms of the variable distributions -------------------
-# Log and not log
-tmp <- map_PMSI21_2[, c(str_glue("{list_var_cont_all}_cr"), str_glue("{listvar_log}_cr"), list_var_cat0 ) ] %>%
+
+#---------------------- Plots of the distributions -----------------------------
+# List of all continuous variables (log and not log)
+list_var_cont_all_and_log <- c(list_var_cont_all, listvar_log)
+
+# Histograms of the variable distributions 
+tmp <- map_PMSI21_2[, c(str_glue("{list_var_cont_all_and_log}_cr"), list_var_cat0 ) ] %>%
   st_drop_geometry()
 
-names(tmp) <- corresp_variable_nom[colnames(tmp) %>% str_remove("_cr"), ]$name
+names(tmp) <- corresp_variable_name[colnames(tmp) %>% str_remove("_cr"), ]$name
 
 plotlist <- list()
 for( v in names(tmp)[names(tmp) != "dens_2010"] ){
@@ -168,4 +179,88 @@ ggfinal
 png(file="distribution_variables.png" %>% respath(), width=600, height=900)
 ggfinal
 dev.off()
+
+
+#------- Correlogram of the log-transformed continuous variables ----------
+map_tmp <- map_PMSI21_2[, str_glue("{c(listvar_log, 'fdep')}_cr") ] %>%
+  st_drop_geometry()
+
+names( map_tmp ) <- corresp_variable_name[ colnames( map_tmp ) %>% 
+                                            str_remove( "_cr") %>% 
+                                            str_remove( "_log"), ]$short_name
+
+
+
+# Correlation matrix with histograms
+png(file="corr_hist_chart_log.png" %>% respath(), width=1000, height=1000)
+chart.Correlation(map_tmp, histogram=TRUE, pch=19)
+dev.off()
+
+
+# Correlation matrix with ellipses
+M <- cor(map_tmp)
+
+coul <- COL2('RdBu', 100) %>% rev
+
+CairoPNG( file="corrplot_log_rect.png" %>% respath(), width=600, height=600 )
+corrplot(M, method = 'ellipse',
+         addCoef.col ='black', 
+         number.cex = 0.8, 
+         order = 'hclust', 
+         hclust.method="average", 
+         diag=FALSE,
+         tl.col='black', 
+         col=coul, 
+         addrect = 3, 
+         rect.lwd = 3, 
+         addgrid.col=NA
+)
+dev.off()
+
+
+
+
+#----- ANOVA association between the density level and the continuous (log-transformed) variables ------
+for( i in 1:ncol(map_tmp) ){
+  cat( "\n\n", names(map_tmp)[i], "\n" )
+  mod <- lm( map_tmp[[i]] ~ map_PMSI21_2$dens_2010  ) %>% anova %$%`Pr(>F)`[1]
+  print( mod )
+}
+
+tmp <- map_PMSI21_2[, c( str_glue( "{listvar_log}_cr" ), "fdep_cr", list_var_cat0 ) ] 
+st_geometry( tmp ) <- NULL
+names( tmp ) <- corresp_variable_name[ colnames( tmp ) %>% str_remove("_cr"), ]$name
+
+plotlist <- list()
+for( v in names(tmp)[names(tmp) != "Population density level" ] ){
+  cat( "\n\n", v, "\n" )
+  
+  plotlist[[ v ]] <-  
+    ggplot( tmp, aes(x =!!sym(v) , fill = `Population density level` ) ) + 
+    geom_histogram()  +
+    scale_fill_grey() + 
+    theme_minimal() +
+    labs( y="" )
+}
+
+# Histograms of the continuous varaibles by density level
+ncol = 2
+nrow = (length(plotlist) / ncol) %>% ceiling
+ggfinal <- ggarrange(  plotlist = plotlist,
+                       ncol = ncol,
+                       nrow = nrow,
+                       common.legend = TRUE
+) %>%
+  annotate_figure(  
+    left = text_grob( "Count", rot = 90, size=10 ))
+
+ggfinal
+
+ggsave(filename = "association_density_covariables_log.png" %>% respath(), 
+       plot=ggfinal , width=15, height=15, units = "cm")
+
+
+
+
+
 
