@@ -29,9 +29,8 @@ Ei_PMSI21 <- arrow::read_parquet("expected_cases_PMSI21.parquet" %>% datapath())
 #---------------- Read explanatory variables ---------------
 expl_var_PMSI21 <- arrow::read_parquet("explanatory_variables_PMSI21.parquet" %>% datapath())
 
-
-#-------------------------- Read correspondence files --------------------------
-# Variable names
+#------------------ Read correspondence files ----------------------
+# Correspondence variable names and labels
 corresp_variable_name <- read_csv2("corresp_variable_name.csv" %>% datapath) %>%
   column_to_rownames("variable")
 
@@ -39,24 +38,8 @@ corresp_variable_name <- read_csv2("corresp_variable_name.csv" %>% datapath) %>%
 corresp_dep_reg <- read_delim("depts2016.txt" %>% datapath) %>%
   dplyr::select( REGION, DEP )
 
-
-#--------- Read shapefiles régions et départements------------
-# Import shapefile of PMSI21 codes for metropolitan France
+#------ Read shapefile of PMSI21 codes (ZIP codes) for metropolitan France -----
 map_PMSI21 <- readRDS( datapath( "France_shapefiles/map_PMSI21_simplified.rds" ) ) 
-
-map_dep <- readRDS( datapath( "France_shapefiles/map_PMSI21_dep.rds" ) )  
-
-map_reg <- readRDS( datapath( "France_shapefiles/map_PMSI21_reg.rds" ) )
-
-
-
-#---------- Read the neighboring matrix of PMSI21 codes ---------
-# Neighbour list object
-tb.adj <- readRDS("neighboring_structure_PMSI21.rds" %>% datapath)
-
-# Create the adjacency matrix
-W <- spdep::nb2mat( neighbours = tb.adj, style = "B", zero.policy = TRUE )
-
 
 
 #------------------------- Prepare the analysis dataset ------------------------
@@ -130,7 +113,7 @@ map_PMSI21_2 %>% names
 
 
 #----- Save the pre-treated dataset ----------------
-saveRDS(map_PMSI21_2, "pretreated_dataset_sf.rds" %>% datapath())
+saveRDS(map_PMSI21_2, "pretreated_dataset_sf.rds" %>% respath())
 
 
 
