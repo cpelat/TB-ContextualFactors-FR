@@ -3,12 +3,9 @@
 # ZIP code-level socioeconomic variables, 2008--2019
 ################################################################################
 
-# Spatial models with INLA using the pre-treated dataset obtained with the R
-# code in file 01_data_pretreatment.R.
-# Central analysis : 
-# BYM2 distribution for spatial random effects
-# Imputation with the kNN algorithm for missing values in case characteristics 
-# (to compute the expected case counts)
+# Univariable models associating TB notification rates with socioeconomic variables.
+# Spatial random effects are modeled with a BYM2 distribution.
+# Models use the inla function on the pre-treated dataset obtained with the R code in file 01_data_pretreatment.R.
 
 library(tidyverse)
 library(magrittr)
@@ -19,13 +16,12 @@ library(ggpubr)
 library(flextable)
 
 
-set_flextable_defaults(  font.size = 10 )
+set_flextable_defaults(font.size = 10)
 setEPS() # Option to generate EPS file with the postscript function
 
 
-
 #--------- Read the useful function bundle ------------
-source( "include/include_functions.R", encoding = "UTF-8" )
+source( "include/functions.R", encoding = "UTF-8" )
 
 #----- Read the pre-treated dataset ----------------
 map_PMSI21_2 <- readRDS("pretreated_dataset_sf.rds" %>% respath())
@@ -73,28 +69,30 @@ list_var_cont_all <- c(
   paste0("_g")
 
 # Create en empty list to stock the models
-list_bym2_univ_rw2 <- list( )
+list_bym2_univ_rw2 <- list()
 
+# Start with the continuous variables
 for( v in list_var_cont_all){  
   print( v )
   list_bym2_univ_rw2[[v]] <- get_univ_model( 
     mydata=map_PMSI21_2,
     Ei="Ei_knn",
     form0 = 'n ~ 
-          f( ID_PMSI21, 
+          f(ID_PMSI21, 
            model="bym2",
            graph = W,
            scale.model = TRUE,
            constr = TRUE,
            hyper = prior.prec.bym2
            )',
-    form_v = 'f( {v}, 
+    form_v = 'f({v}, 
               model = "rw2", 
               scale.model = TRUE, 
               constr = TRUE
               )')
 }
 
+# Add the population density level (categorial variable)
 v <- "dens_2010"
 list_bym2_univ_rw2[[v]] <- get_univ_model( 
   mydata=map_PMSI21_2,
