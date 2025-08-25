@@ -15,10 +15,11 @@ library(corrplot)
 library(PerformanceAnalytics)
 library(ggpubr)
 library(INLA)
+library(Cairo)
 
 
 #--------- Read the useful function bundle ------------
-source( "include/include_functions.R", encoding = "UTF-8" )
+source( "include/functions.R", encoding = "UTF-8" )
 
 #----------- Read TB cases dataset -------------
 d_PMSI21 <- arrow::read_parquet("TB_cases_PMSI21.parquet" %>% datapath) 
@@ -123,7 +124,6 @@ saveRDS(map_PMSI21_2, "pretreated_dataset_sf.rds" %>% respath())
 
 #---------------------- Plots of the distributions -----------------------------
 
-
 # Histograms of the variable distributions 
 tmp <- map_PMSI21_2[, c(str_glue("{list_var_cont_all_and_log}_cr"), list_var_cat0 ) ] %>%
   st_drop_geometry()
@@ -182,7 +182,7 @@ dev.off()
 # Correlation matrix with ellipses
 M <- cor(map_tmp)
 coul <- COL2('RdBu', 100) %>% rev
-CairoPNG( file="corrplot_log_rect.png" %>% respath(), width=600, height=600 )
+CairoPNG(file="corrplot_log_rect.png" %>% respath(), width=600, height=600)
   corrplot(M, method = 'ellipse',
          addCoef.col ='black', 
          number.cex = 0.8, 
