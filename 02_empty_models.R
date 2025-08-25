@@ -17,15 +17,11 @@ library(Cairo)
 library(INLA)
 library(cowplot)
 library(ggpubr)
-library(flextable)
-
-set_flextable_defaults(  font.size = 10 )
-setEPS()  
 
 
 
 #--------- Read the useful function bundle ------------
-source( "include/include_functions.R", encoding = "UTF-8" )
+source( "include/functions.R", encoding = "UTF-8" )
 
 #----- Read the pre-treated dataset ----------------
 map_PMSI21_2 <- readRDS("pretreated_dataset_sf.rds" %>% respath())
@@ -86,8 +82,6 @@ model_bym2_empty <- inla(form_bym2_empty,
 
 #saveRDS(model_bym2_empty, file="model_bym2_empty.rds" %>% respath)
 #model_bym2_empty <- readRDS( "model_bym2_empty.rds" %>% respath)
-
-
 
 
 
@@ -193,7 +187,6 @@ p1_bym2 <- plotmap_inset( var= "SNR_bym2",
                           legend.text.size = 12
 )
 
-
 p1_leroux <- plotmap_inset( var= "SNR_leroux", 
                             mytitle="SNR, Leroux model", 
                             mymap=map_PMSI21_3,
@@ -207,6 +200,7 @@ p1_leroux <- plotmap_inset( var= "SNR_leroux",
                             col.dep="black",
                             legend.text.size = 12
 )
+
 
 
 #----------- Create the spatial random effects (Ui) maps ----------
@@ -230,6 +224,9 @@ p2_bym2 <- plotmap_inset( var= "Ui_empty_bym2",
                           legend.text.size = 12
 )
 
+# Save this graph for later
+saveRDS(p2_bym2, respath("plot_Ui_BYM2_empty.rds"))
+
 p2_leroux <- plotmap_inset( var= "Ui_empty_leroux", 
                             mytitle="Spatial random effect, Leroux model", 
                             mymap=map_PMSI21_3,
@@ -246,14 +243,13 @@ p2_leroux <- plotmap_inset( var= "Ui_empty_leroux",
 
 
 
-
-
 #---- Plot the SNR and Ui maps for the BYM2 model (central analysis) ------
 ptot <- ggarrange(p1_bym2, p2_bym2, nrow=1, ncol=2)  
 
 png( "SNR_Ui_empty_model_bym2.png" %>% respath, width=1000, height=600)
 ptot
 dev.off()
+
 
 #----- Plot the SNR and Ui maps for the BYM2 and Leroux model ----
 ptot_sens <- ggarrange(p1_bym2, p1_leroux, 
